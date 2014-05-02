@@ -1,0 +1,18 @@
+<h1><%= "Login and Pay With Amazon Settings" %></h1>
+
+<%= form_tag(admin_amazon_payments_settings_path, :method => :put) do |f| %>
+  <% [:seller_id, :client_id, :client_secret, :amazon_mws_endpoint, :widgets_js_url, :profile_api_endpoint].each do |setting| %>
+    <p><%= setting_field(setting) %></p>
+  <% end %>
+
+  <p class="form-buttons">
+    <%= button Spree.t('update') %>
+    <%= Spree.t("or") %> <%= link_to Spree.t("cancel"), admin_amazon_payments_settings_url %>
+  </p>
+<% end %>
+
+<% content_for :head do %>
+  <style>
+    .edit_amazon_payments_configuration input { width: 250px; }
+  </style>
+<% end %>

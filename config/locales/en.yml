@@ -1,0 +1,11 @@
+# Sample localization file for English. Add more files in this directory for other locales.
+# See https://github.com/svenfuchs/rails-i18n/tree/master/rails%2Flocale for starting points.
+
+en:
+  amazon_payments:
+    seller_id: "Seller ID"
+    client_id: "Client ID"
+    client_secret: "Client Secret"
+    amazon_mws_endpoint: "Amazon MWS Endpoint"
+    widgets_js_url: "Widgets.js Url"
+    profile_api_endpoint: "Profile API Endpoint"

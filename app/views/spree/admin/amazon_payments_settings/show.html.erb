@@ -1,0 +1,13 @@
+<h1><%= "Login and Pay With Amazon Settings" %></h1>
+
+<table>
+  <% [:seller_id, :client_id, :client_secret, :amazon_mws_endpoint, :widgets_js_url, :profile_api_endpoint].each do |setting| %>
+    <%= setting_presentation_row(setting) %>
+  <% end %>
+</table>
+
+<p>
+  <%= link_to_with_icon 'edit', Spree.t("edit"), edit_admin_amazon_payments_settings_path %>
+</p>
+
+
