@@ -1,12 +1,12 @@
-<div id="AmazonPayButton"/>
+<div id="AmazonPayButton"></div>
 <script type="text/javascript">
   var authRequest;
   OffAmazonPayments.Button("AmazonPayButton", "<%= Spree::AmazonPayments::Config['seller_id'] %>", {
     type: "LwA",
         authorization: function() {
       loginOptions =
-        {scope: "profile payments:widget payments:shipping_address", true};
-      authRequest = amazon.Login.authorize (loginOptions, "<%= spree_checkout_update_amazon_registration_url %>");
+        {scope: "profile payments:widget payments:shipping_address", popup: true};
+      authRequest = amazon.Login.authorize (loginOptions, "<%= amazon_login_url %>");
     },
     onError: function(error) {
       // your error handling code

@@ -1,8 +1,19 @@
+<%
+  amazon_config = Spree::AmazonPayments::Config
+  unless amazon_config['seller_id'].nil? || amazon_config['client_id'].nil? || amazon_config['widgets_js_url'].nil?
+%>
 <script type='text/javascript'>
   window.onAmazonLoginReady = function() {
-    amazon.Login.setClientId('<%= Spree::AmazonPayments::Config['client_id'] %>');
+
+    amazon.Login.setClientId('<%= amazon_config['client_id'] %>');
   };
+  // window.onAmazonLoginReady = function() {
+
+  //   amazon.Login.setClientId('amzn1.application-oa2-client.3bcd60046a814b0ab85edb566b1da6e5');
+  // };
 </script>
 <script type='text/javascript'
-  src='<%= Spree::AmazonPayments::Config['widgets_js_url'] %>?sellerId=<%= Spree::AmazonPayments::Config['seller_id'] %>'>
+  src='<%= amazon_config['widgets_js_url'] %>?sellerId=<%= amazon_config['seller_id'] %>'>
 </script>
+<!--<script type="text/javascript" src="https://static-na.payments-amazon.com/OffAmazonPayments/us/js/Widgets.js?sellerId=AX9NCRKSXSL9B"></script>-->
+<% end %>

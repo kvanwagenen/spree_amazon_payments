@@ -1,10 +1,10 @@
 module Spree
   class AmazonPaymentsConfiguration < Preferences::Configuration
-    preference :seller_id, :default => ''
-    preference :client_id, :default => ''
-    preference :client_secret, :default => ''
-    preference :amazon_mws_endpoint, :default => ''
-    preference :widgets_js_url, :default => ''
-    preference :profile_api_endpoint, :default => ''
+    preference :seller_id, :string, :default => ''
+    preference :client_id, :string, :default => ''
+    preference :client_secret, :string, :default => ''
+    preference :amazon_mws_endpoint, :string, :default => ''
+    preference :widgets_js_url, :string, :default => ''
+    preference :profile_api_endpoint, :string, :default => ''
   end
 end
