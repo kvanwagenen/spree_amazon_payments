@@ -1,0 +1,19 @@
+<div id="walletWidgetDiv">
+</div>
+<script>
+
+new OffAmazonPayments.Widgets.Wallet({
+  sellerId: '<%= Spree::AmazonPayments::Config['seller_id'] %>',
+    design: {
+    size : {width:'400px', height:'260px'}
+  },
+
+  onPaymentSelect: function(orderReference) {
+    // Replace this code with the action that you want to perform
+    // after the payment method is selected.
+  },
+  onError: function(error) {
+    // your error handling code
+  }
+}).bind("walletWidgetDiv");
+</script>

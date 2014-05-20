@@ -1,19 +1,47 @@
+require 'httparty'
+require 'net/https'
+require 'json'
+require 'uri'
+
 module Spree
-  class AmazonController < Spree::StoreController
+  class AmazonController < Devise::SessionsController
     def login
-      binding.pry
 
+      # Validate access token
+      response = HTTParty.get("https://api.amazon.com/auth/o2/tokeninfo?access_token=#{Rack::Utils.escape(params[:access_token])}")
+      
       # Request profile from amazon
-
-      # Check for existing user with same email
+      profile_uri = Spree::AmazonPayments::Config[:profile_api_endpoint]
+      profile = HTTParty.get("#{profile_uri}?access_token=#{Rack::Utils.escape(params[:access_token])}")
 
       # Lookup or create user
+      user = User.find_by_email(profile["email"]) || User.create(email: profile["email"])
 
-      # Save access token for user
+      # Update access token for user
+      session[:auth_source] = "amazon"
 
-      # Login user 
-      # TODO See update_registration in spree_auth_devise
-      redirect_to home_path
+      # Login user
+      sign_in user, :bypass => true
+
+      redirect_back_or_default(after_sign_in_path_for(spree_current_user))
     end
+
+    def payment_success
+      # See 
+    end
+
+    def payment_cancel
+      flash[:notice] = Spree.t('flash.cancel', :scope => 'amazon_payments')
+      order = current_order || raise(ActiveRecord::RecordNotFound)
+      redirect_to checkout_state_path(order.state)
+    end
+
+    private 
+
+    def redirect_back_or_default(default)
+      redirect_to(session["spree_user_return_to"] || default)
+      session["spree_user_return_to"] = nil
+    end
+    
   end
 end
