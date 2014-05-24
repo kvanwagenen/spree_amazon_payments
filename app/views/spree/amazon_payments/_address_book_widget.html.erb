@@ -18,21 +18,27 @@ new OffAmazonPayments.Widgets.AddressBook({
    // The Wallet widget will re-render itself on all subsequent 
    // onAddressSelect events, without any action from you. It is not 
    // recommended that you explicitly refresh it.
-   alert('Address selected!');
    $('#save-btn').removeAttr('disabled');
   },
   design: {
      size : {width:'400px', height:'260px'}
   },
-  onError: function(error) {
+  onError: function(error) {    
    console.log(error.getErrorCode());
-   console.log(error.getErrorMessage());
+   console.log(error.getErrorMessage());    
   }
 }).bind("addressBookWidgetDiv");
 
 
 // Disable the save button until the user selects an address
 $(function(){
+  $('#checkout_form_address').submit(function(e){
+    e.preventDefault();
+  });
   $('#save-btn').attr('disabled','disabled');
+  $('#save-btn').click(function(e){
+    document.location.href = "/checkout/update/address"
+  });
+  $('#addresses').addClass('amazon');
 });
 </script>
