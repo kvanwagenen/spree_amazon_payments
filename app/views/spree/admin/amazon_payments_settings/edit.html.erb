@@ -1,7 +1,7 @@
 <h1><%= "Login and Pay With Amazon Settings" %></h1>
 
 <%= form_tag(admin_amazon_payments_settings_path, :method => :put) do |f| %>
-  <% [:seller_id, :client_id, :client_secret, :amazon_mws_endpoint, :widgets_js_url, :profile_api_endpoint].each do |setting| %>
+  <% [:seller_id, :client_id, :client_secret, :amazon_mws_endpoint, :widgets_js_url, :profile_api_endpoint, :marketplace_id, :aws_access_key_id, :aws_secret_access_key].each do |setting| %>
     <p><%= setting_field(setting) %></p>
   <% end %>
 
