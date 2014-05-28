@@ -6,7 +6,7 @@ require 'uri'
 module Spree
   class AmazonController < Devise::SessionsController
     def login
-
+      
       # Validate access token
       response = HTTParty.get("https://api.amazon.com/auth/o2/tokeninfo?access_token=#{Rack::Utils.escape(params[:access_token])}")
       
@@ -16,6 +16,12 @@ module Spree
 
       # Lookup or create user
       user = User.find_by_email(profile["email"]) || User.create(email: profile["email"])
+      
+      # Set the user's password to be their amazon profile id if we are creating new from an amazon profile
+      if user.password.nil?
+        user.password = profile["user_id"]
+        user.save!
+      end
 
       # Update access token for user
       session[:auth_source] = "amazon"
@@ -23,7 +29,7 @@ module Spree
       # Login user
       sign_in user, :bypass => true
 
-      redirect_back_or_default(after_sign_in_path_for(spree_current_user))
+      redirect_back_or_default(after_sign_in_path_for(user))
     end
 
     def payment_success
