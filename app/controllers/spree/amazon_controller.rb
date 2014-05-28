@@ -15,7 +15,7 @@ module Spree
       profile = HTTParty.get("#{profile_uri}?access_token=#{Rack::Utils.escape(params[:access_token])}")
 
       # Lookup or create user
-      user = User.find_by_email(profile["email"]) || User.create(email: profile["email"])
+      user = User.find_by_email(profile["email"]) || User.create(email: profile["email"], amazon_user_id: profile["user_id"])
       
       # Set the user's password to be their amazon profile id if we are creating new from an amazon profile
       if user.password.nil?
