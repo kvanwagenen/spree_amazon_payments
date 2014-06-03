@@ -4,8 +4,10 @@
 <script>
 new OffAmazonPayments.Widgets.AddressBook({
   sellerId: '<%= Spree::AmazonPayments::Config['seller_id'] %>',
+  displayMode: '<%= display_mode %>',
   onOrderReferenceCreate: function(orderReference) {
-           orderReference.getAmazonOrderReferenceId();
+    var amazonOrderReferenceId = orderReference.getAmazonOrderReferenceId();
+    $('#amazon_order_reference_id').val(amazonOrderReferenceId);
   },
   onAddressSelect: function(orderReference) {
    // Replace the following code with the action that you want to perform 
@@ -28,17 +30,4 @@ new OffAmazonPayments.Widgets.AddressBook({
    console.log(error.getErrorMessage());    
   }
 }).bind("addressBookWidgetDiv");
-
-
-// Disable the save button until the user selects an address
-$(function(){
-  $('#checkout_form_address').submit(function(e){
-    e.preventDefault();
-  });
-  $('#save-btn').attr('disabled','disabled');
-  $('#save-btn').click(function(e){
-    document.location.href = "/checkout/update/address"
-  });
-  $('#addresses').addClass('amazon');
-});
 </script>

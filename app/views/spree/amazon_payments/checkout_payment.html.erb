@@ -1,0 +1,12 @@
+<% @body_class = "checkout" %>
+<%= render :partial => 'spree/amazon_payments/wallet_widget', :locals => {:display_mode => "Edit" } %>
+<div class="form-buttons" data-hook="buttons">
+<%= form_tag(amazon_checkout_update_path('payment'), method: "put") do %>
+  	<%= button_tag Spree.t(:save_and_continue), :id => 'save-btn', :class => 'btn btn-success' %>
+<% end %>
+</div>
+<script>
+$(function(){
+	$('#save-btn').attr('disabled','disabled');
+});	
+</script>

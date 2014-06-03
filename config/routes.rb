@@ -3,8 +3,9 @@ Spree::Core::Engine.routes.draw do
     resource :amazon_payments_settings
   end
   devise_scope :spree_user do 
-    get '/amazon/login', :to => 'amazon#login', :as => :amazon_login
+    get '/amazon-login', :to => 'amazon_login#login', :as => :amazon_login
   end
-  get '/amazon/payments/success', :to => 'amazon#payments_success', :as => :amazon_payments_success
-  get '/amazon/payments/cancelled', :to => 'amazon#payments_cancelled', :as => :amazon_payments_cancelled
+  put '/amazon-payments/checkout/update/:state', :to => 'amazon_checkout#update', :as => :amazon_checkout_update
+  get '/amazon-payments/checkout/:state', :to => 'amazon_checkout#show', :as => :amazon_checkout_state
+  get '/amazon-payments/checkout', :to => 'amazon_checkout#show', :as => :amazon_checkout
 end

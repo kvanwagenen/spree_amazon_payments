@@ -1,0 +1,15 @@
+<%= render :file => 'spree/checkout/edit' %>
+<script>
+$(function(){
+  var $form = $("#checkout_form_delivery");
+  $form.submit(function(e){
+    e.preventDefault();
+    return false;
+  });
+  $('#save-btn').click(function(e){
+    $.post("<%= update_checkout_path('delivery') %>", $form.serialize(), function(data){
+      document.location.href = "<%= amazon_checkout_state_path('payment') %>";
+    });
+  });
+});
+</script>

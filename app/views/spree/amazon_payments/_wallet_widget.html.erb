@@ -7,10 +7,12 @@ new OffAmazonPayments.Widgets.Wallet({
     design: {
     size : {width:'400px', height:'260px'}
   },
+  displayMode: '<%= display_mode %>',
 
   onPaymentSelect: function(orderReference) {
     // Replace this code with the action that you want to perform
     // after the payment method is selected.
+    $('#save-btn').removeAttr('disabled');
   },
   onError: function(error) {
     // your error handling code

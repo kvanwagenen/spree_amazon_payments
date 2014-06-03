@@ -1,0 +1,17 @@
+<div id="addresses">
+	<%= render :partial => "spree/amazon_payments/address_book_widget", :locals => {:display_mode => "Edit" } %>
+</div>
+<div class="form-buttons" data-hook="buttons">
+<%= form_tag(amazon_checkout_update_path('address'), method: "put") do %>
+	<%= hidden_field_tag(:amazon_order_reference_id, "") %>
+  	<%= button_tag Spree.t(:save_and_continue), :id => 'save-btn', :class => 'btn btn-success' %>
+<% end %>
+</div>
+<script>
+$(function(){
+	$('#addresses').addClass('amazon');
+
+	// Disable the save button until the user selects an address
+	$('#save-btn').attr('disabled','disabled');
+});	
+</script>

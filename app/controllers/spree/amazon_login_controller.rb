@@ -4,7 +4,7 @@ require 'json'
 require 'uri'
 
 module Spree
-  class AmazonController < Devise::SessionsController
+  class AmazonLoginController < Devise::SessionsController
     def login
       
       # Validate access token
@@ -23,23 +23,16 @@ module Spree
         user.save!
       end
 
-      # Update access token for user
-      session[:auth_source] = "amazon"
-
       # Login user
       sign_in user, :bypass => true
 
-      redirect_back_or_default(after_sign_in_path_for(user))
-    end
-
-    def payment_success
-      # See 
-    end
-
-    def payment_cancel
-      flash[:notice] = Spree.t('flash.cancel', :scope => 'amazon_payments')
-      order = current_order || raise(ActiveRecord::RecordNotFound)
-      redirect_to checkout_state_path(order.state)
+      # If user logged in from cart page proceed to checkout
+      if request.referrer == cart_url
+        redirect_to(amazon_checkout_path)
+      else
+        redirect_back_or_default(after_sign_in_path_for(user))
+      end
+      
     end
 
     private 
@@ -48,6 +41,5 @@ module Spree
       redirect_to(session["spree_user_return_to"] || default)
       session["spree_user_return_to"] = nil
     end
-    
   end
 end

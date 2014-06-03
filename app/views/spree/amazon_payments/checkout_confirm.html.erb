@@ -1,0 +1,8 @@
+<%= render :partial => 'spree/amazon_payments/address_book_widget', :locals => {:display_mode => "Read"} %>
+<%= render :partial => 'spree/amazon_payments/wallet_widget', :locals => {:display_mode => "Read"} %>
+<%= form_tag(amazon_checkout_update_path('confirm'), method: "put") do %>
+	<div class="form-buttons" data-hook="buttons">
+		<%= submit_tag Spree.t(:place_order), :id => 'save-btn', :class => 'btn btn-success' %>
+		<script>Spree.disableSaveOnClick();</script>
+	</div>
+<% end %>
