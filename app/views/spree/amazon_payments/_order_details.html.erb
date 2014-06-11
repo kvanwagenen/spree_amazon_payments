@@ -1,0 +1,87 @@
+<fieldset id="order_details" data-hook>
+<div class="row steps-data">
+  <% if order.has_step?("address") %>
+    <% if @order.has_step?("delivery") %>
+      <div class="order-detail-row">
+        <div class='edit-btn-block'></div><h4><%= Spree.t(:shipments) %></h4><div class='edit-btn-block'> <%= link_to "#{Spree.t(:edit)}", amazon_checkout_state_path(:delivery), :class => 'btn btn-default' unless @order.completed? %></div>
+        <div class="delivery">
+          <% order.shipments.each do |shipment| %>
+            <div class="shipment-title"><%= "Shipping from #{shipment.stock_location.name}" %></div>
+            <div><%= shipment.shipping_method.name %></div>
+            <div class="est-ship">Estimated Ship Date: <span class="est-ship-date"><%= shipment.estimated_ship_date.strftime("%b %-d") %></span></div>
+          <% end %>
+        </div>
+        <%= render(:partial => 'spree/shared/shipment_tracking', :locals => {:order => @order}) if @order.shipped? %>
+      </div>
+
+      <div class="order-detail-row">
+        <div class='edit-btn-block'></div><h4><%= Spree.t(:payment_information) %></h4><div class='edit-btn-block'></div>
+        <div class="payment-info">Amazon Payments</div>
+      </div>
+    <% end %>
+  <% end %>
+</div>
+
+<div class="items-wrapper">
+<table id='line-items' class="index" data-hook="order_details">
+  <col width="20%" valign="middle" halign="center">
+  <col width="41%" valign="middle">
+  <col width="13%" valign="middle" halign="center">
+  <col width="13%" valign="middle" halign="center">
+  <col width="13%" valign="middle" halign="center">
+
+  <thead data-hook>
+    <tr data-hook="order_details_line_items_headers">
+      <th colspan="2"><%= Spree.t(:item) %></th>
+      <th class="price"><%= Spree.t(:price) %></th>
+      <th class="qty"><%= Spree.t(:qty) %></th>
+      <th class="total"><span><%= Spree.t(:total) %></span></th>
+    </tr>
+  </thead>
+
+  <tbody data-hook>
+    <% @order.line_items.each do |item| %>
+      <tr data-hook="order_details_line_item_row">
+        <td data-hook="order_item_image">
+          <% if item.variant.images.length == 0 %>
+            <%= link_to small_image(item.variant.product), item.variant.product %>
+          <% else %>
+            <%= link_to image_tag(item.variant.images.first.attachment.url(:small)), item.variant.product %>
+          <% end %>
+        </td>
+        <td data-hook="order_item_description">
+          <h6 class="item-name"><%= item.variant.product.name %></h6>
+          <%= "(" + item.variant.options_text + ")" unless item.variant.option_values.empty? %>
+        </td>
+        <td data-hook="order_item_price" class="price"><span><%= item.single_money.to_html %></span></td>
+        <td data-hook="order_item_qty"><%= item.quantity %></td>
+        <td data-hook="order_item_total" class="total"><span><%= item.display_amount.to_html %></span></td>
+      </tr>
+    <% end %>
+  </tbody>
+</table>
+  <% unless @order.state == "complete" %>
+    <%= link_to "Change Order", cart_path, {:id => 'change-order-lnk'} %>
+  <% end %>
+</div>
+
+<div id="order-summary">
+  <%= render :partial => 'spree/shared/order_details_adjustment', :locals => {:label => Spree.t(:subtotal), :amount => @order.display_item_total.to_html} %>
+  <% if order.line_item_adjustment_totals.present? %>
+      <% @order.line_item_adjustment_totals.each do |key, total| %>
+        <%= render :partial => 'spree/shared/order_details_adjustment', :locals => {:label => key, :amount => total} %>
+      <% end %>
+  <% end %>  
+  <% if @order.adjustments.shipping.any? %>
+    <% shipping_total = Spree::Money.new(@order.adjustments.eligible.shipping.sum{|a| a.amount}, :currency => @order.currency) %>
+    <% shipping_label = @order.adjustments.shipping.first.label %>
+    <%= render :partial => 'spree/shared/order_details_adjustment', :locals => {:label => shipping_label, :amount => shipping_total.to_html} %>
+  <% end %>
+  <% @order.adjustments.eligible.each do |adjustment| %>
+  <% next if @order.adjustments.shipping.include?(adjustment) %>
+  <% next if (adjustment.originator_type == 'Spree::TaxRate') and (adjustment.amount == 0) %>
+    <%= render :partial => 'spree/shared/order_details_adjustment', :locals => {:label => adjustment.label, :amount => adjustment.display_amount.to_html} %>
+  <% end %>
+  <%= render :partial => 'spree/shared/order_details_adjustment', :locals => {:label => Spree.t(:order_total), :amount => @order.display_total.to_html} %>
+</div>
+</fieldset>

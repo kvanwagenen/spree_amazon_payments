@@ -3,7 +3,7 @@
 
 <script>
 new OffAmazonPayments.Widgets.AddressBook({
-  sellerId: '<%= Spree::AmazonPayments::Config['seller_id'] %>',
+  sellerId: '<%= amazon_payments.preferred_seller_id %>',
   displayMode: '<%= display_mode %>',
   onOrderReferenceCreate: function(orderReference) {
     var amazonOrderReferenceId = orderReference.getAmazonOrderReferenceId();

@@ -1,3 +1,6 @@
+require 'ostruct'
+require 'nokogiri'
+
 module Spree
   class Gateway::AmazonPayments < Gateway
     preference :seller_id, :string, :default => ''
@@ -34,61 +37,177 @@ module Spree
       'amazon_payments'
     end
 
-    def purchase(amount, express_checkout, gateway_options={})
-      # pp_details_request = provider.build_get_express_checkout_details({
-      #   :Token => express_checkout.token
-      # })
-      # pp_details_response = provider.get_express_checkout_details(pp_details_request)
-
-      # pp_request = provider.build_do_express_checkout_payment({
-      #   :DoExpressCheckoutPaymentRequestDetails => {
-      #     :PaymentAction => "Sale",
-      #     :Token => express_checkout.token,
-      #     :PayerID => express_checkout.payer_id,
-      #     :PaymentDetails => pp_details_response.get_express_checkout_details_response_details.PaymentDetails
-      #   }
-      # })
-
-      # pp_response = provider.do_express_checkout_payment(pp_request)
-      # if pp_response.success?
-      #   # We need to store the transaction id for the future.
-      #   # This is mainly so we can use it later on to refund the payment if the user wishes.
-      #   transaction_id = pp_response.do_express_checkout_payment_response_details.payment_info.first.transaction_id
-      #   express_checkout.update_column(:transaction_id, transaction_id)
-      #   # This is rather hackish, required for payment/processing handle_response code.
-      #   Class.new do
-      #     def success?; true; end
-      #     def authorization; nil; end
-      #   end.new
-      # else
-      #   class << pp_response
-      #     def to_s
-      #       errors.map(&:long_message).join(" ")
-      #     end
-      #   end
-      #   pp_response
-      # end
+    def payment_profiles_supported?
+      true
     end
 
-    def refund(payment, amount)
-      # refund_type = payment.amount == amount.to_f ? "Full" : "Partial"
-      # refund_transaction = provider.build_refund_transaction({
-      #   :TransactionID => payment.source.transaction_id,
-      #   :RefundType => refund_type,
-      #   :Amount => {
-      #     :currencyID => payment.currency,
-      #     :value => amount },
-      #   :RefundSource => "any" })
-      # refund_transaction_response = provider.refund_transaction(refund_transaction)
-      # if refund_transaction_response.success?
-      #   payment.source.update_attributes({
-      #     :refunded_at => Time.now,
-      #     :refund_transaction_id => refund_transaction_response.RefundTransactionID,
-      #     :state => "refunded",
-      #     :refund_type => refund_type
-      #   }, :without_protection => true)
-      # end
-      # refund_transaction_response
+    def authorize(amount, amazon_payments_checkout, gateway_options)
+
+      # Request authorization
+      begin
+        response = off_amazon_payments_client.authorize(
+          amazon_payments_checkout.order_reference_id, 
+          amazon_payments_checkout.authorization_reference_id, 
+          amount, 
+          gateway_options[:currency]
+        )
+        
+        # Read and save amazon authorization id
+        xml = Nokogiri::XML(response.body)
+        auth_id = xml.css("AmazonAuthorizationId").first.inner_html
+        amazon_payments_checkout.amazon_authorization_id = auth_id
+        amazon_payments_checkout.save!
+        
+        # Create response for processing module
+        OpenStruct.new({
+          :success? => true,
+          :authorization => auth_id,
+          :avs_result => {'code' => nil},
+          :cvv_result => false
+        })
+      rescue Excon::Errors::BadRequest => e
+        logger.error("Attempted to authorize amazon payment more than once. #{self.to_s}:id(#{self.id})")
+        return OpenStruct.new({:success? => false})
+      end
+    end
+
+    def capture(payment, amazon_payments_checkout, gateway_options)
+      
+      # Verify authorization status
+      if amazon_payments_checkout.can_capture?(payment)
+
+        # Capture payment
+        begin
+          capture_reference_id = "#{payment.order.number}_cap"
+          response = off_amazon_payments_client.capture(
+            amazon_payments_checkout.amazon_authorization_id,
+            capture_reference_id, 
+            payment.money.money.to_f,
+            gateway_options[:currency]
+          )
+
+          # Save capture info
+          xml = Nokogiri::XML(response.body)
+          amazon_capture_id = xml.css("AmazonCaptureId").first.inner_html
+          amazon_payments_checkout.capture_reference_id = capture_reference_id
+          amazon_payments_checkout.amazon_capture_id = amazon_capture_id
+          amazon_payments_checkout.save!
+
+        rescue Exception => e
+          response = OpenStruct.new({
+            :success? => false,
+            :to_s => ""
+          })
+          response.instance_eval do
+            def to_s
+              "Error requesting capture on payment"
+            end
+          end
+          return response
+        end
+
+        # Create response for processing module
+        OpenStruct.new({:success? => true})
+      else
+        response = OpenStruct.new({
+          :success? => false,
+          :to_s => ""
+        })
+        response.instance_eval do
+          def to_s
+            "Payment authorization has been declined"
+          end
+        end
+        response
+      end
+    end
+
+    def void(authorization_code, amazon_payments_checkout, gateway_options)
+      begin
+        response = off_amazon_payments_client.cancel_order_reference(
+          amazon_payments_checkout.order_reference_id
+        )
+        OpenStruct.new({:success? => true})
+      rescue
+        logger.error("Failed to void amazon payment. Checkout id:(#{amazon_payments_checkout.id}")
+        return OpenStruct.new({
+          :success? => false,
+          :to_s => "Error voiding payment"
+        })
+      end
+    end
+
+    def credit(credit_cents, amazon_payments_checkout, amazon_authorization_id, gateway_options)
+      begin
+        credit_amount = (credit_cents * 0.01).round(2)
+
+        # If told to credit 0, credit the full amount instead
+        if credit_amount == 0
+          credit_amount = amazon_payments_checkout.payment.amount.to_f
+          credit_cents = (credit_amount * 100).to_i
+        end
+        
+        refund_reference_id = "#{amazon_payments_checkout.payment.order.number}_refund"
+        response = off_amazon_payments_client.refund(
+          amazon_payments_checkout.amazon_capture_id,
+          refund_reference_id,
+          credit_amount,
+          gateway_options[:currency]
+        )
+
+        # Save refund id
+        refund_id = Nokogiri::XML(response.body).css("AmazonRefundId").first.inner_html
+        amazon_payments_checkout.refund_reference_id = refund_reference_id
+        amazon_payments_checkout.amazon_refund_id = refund_id
+        amazon_payments_checkout.save!
+      rescue Exception => e
+        logger.error("#{e.to_s}\n#{e.backtrace.join('\n')}")
+        response = OpenStruct.new({
+          :success? => false
+        })
+        response.instance_eval do
+          def to_s
+            "Error requesting credit on payment"
+          end
+        end
+        return response
+      end
+
+      OpenStruct.new({:success? => true})
+    end
+
+    def has_authorization?(payment)
+      return !payment.source.amazon_authorization_id.nil?
+    end
+
+    def has_capture?(payment)
+      return !payment.source.amazon_capture_id.nil?
+    end
+
+    def has_refund?(payment)
+      return !payment.source.amazon_refund_id.nil?
+    end
+
+    def order_details_xml(payment)
+      off_amazon_payments_client.get_order_reference_details(payment.source.order_reference_id).body
+    end
+
+    def authorization_details_xml(payment)
+      off_amazon_payments_client.get_authorization_details(payment.source.amazon_authorization_id).body
+    end
+
+    def capture_details_xml(payment)
+      off_amazon_payments_client.get_capture_details(payment.source.amazon_capture_id).body
+    end
+
+    def refund_details_xml(payment)
+      off_amazon_payments_client.get_refund_details(payment.source.amazon_refund_id).body
+    end
+
+    private
+
+    def off_amazon_payments_client
+      SpreeAmazonPayments::OffAmazonPayments.client
     end
   end
 end

@@ -3,7 +3,7 @@
 <script>
 
 new OffAmazonPayments.Widgets.Wallet({
-  sellerId: '<%= Spree::AmazonPayments::Config['seller_id'] %>',
+  sellerId: '<%= amazon_payments.preferred_seller_id %>',
     design: {
     size : {width:'400px', height:'260px'}
   },
@@ -16,6 +16,7 @@ new OffAmazonPayments.Widgets.Wallet({
   },
   onError: function(error) {
     // your error handling code
+    console.log(error);
   }
 }).bind("walletWidgetDiv");
 </script>

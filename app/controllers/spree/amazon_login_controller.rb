@@ -3,32 +3,44 @@ require 'net/https'
 require 'json'
 require 'uri'
 
+require_dependency 'concerns/amazon_payments_concerns'
+
 module Spree
   class AmazonLoginController < Devise::SessionsController
-    def login
-      
+    include AmazonPaymentsConcerns
+
+    def login      
+
       # Validate access token
       response = HTTParty.get("https://api.amazon.com/auth/o2/tokeninfo?access_token=#{Rack::Utils.escape(params[:access_token])}")
       
       # Request profile from amazon
-      profile_uri = Spree::AmazonPayments::Config[:profile_api_endpoint]
+      profile_uri = amazon_payments.preferred_profile_api_endpoint
       profile = HTTParty.get("#{profile_uri}?access_token=#{Rack::Utils.escape(params[:access_token])}")
 
-      # Lookup or create user
-      user = User.find_by_email(profile["email"]) || User.create(email: profile["email"], amazon_user_id: profile["user_id"])
-      
-      # Set the user's password to be their amazon profile id if we are creating new from an amazon profile
-      if user.password.nil?
-        user.password = profile["user_id"]
-        user.save!
+      # Check if user isn't logged in
+      if spree_current_user.nil?
+
+        # Lookup or create user
+        user = User.find_by_amazon_user_id(profile["user_id"])
+        if user.nil?
+          user = User.create(email: profile["email"], amazon_user_id: profile["user_id"], password: profile["user_id"])
+        end
+
+        # Login user
+        sign_in user, :bypass => true
+
+      else
+
+        # Update the user's amazon user id
+        spree_current_user.amazon_user_id = profile["user_id"]
+        spree_current_user.save!
+
       end
 
-      # Login user
-      sign_in user, :bypass => true
-
       # If user logged in from cart page proceed to checkout
-      if request.referrer == cart_url
-        redirect_to(amazon_checkout_path)
+      if request.referrer == cart_url || request.referrer == checkout_state_url("payment")
+        redirect_to(amazon_checkout_state_path('address'))
       else
         redirect_back_or_default(after_sign_in_path_for(user))
       end

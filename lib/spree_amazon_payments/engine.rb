@@ -6,10 +6,6 @@ module SpreeAmazonPayments
 
     config.autoload_paths += %W(#{config.root}/lib)
 
-    initializer "spree.amazon_payments.environment", :before => :load_config_initializers do |app|
-      Spree::AmazonPayments::Config = Spree::AmazonPaymentsConfiguration.new
-    end
-
     initializer "spree.amazon_payments.payment_methods", :after => "spree.register.payment_methods" do |app|
       app.config.spree.payment_methods << Spree::Gateway::AmazonPayments
     end

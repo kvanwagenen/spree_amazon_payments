@@ -8,4 +8,7 @@ Spree::Core::Engine.routes.draw do
   put '/amazon-payments/checkout/update/:state', :to => 'amazon_checkout#update', :as => :amazon_checkout_update
   get '/amazon-payments/checkout/:state', :to => 'amazon_checkout#show', :as => :amazon_checkout_state
   get '/amazon-payments/checkout', :to => 'amazon_checkout#show', :as => :amazon_checkout
+
+  # IPN Route
+  post '/amazon-payments/ipn', :to => 'amazon_ipn#ipn', :as => :amazon_payments_ipn
 end

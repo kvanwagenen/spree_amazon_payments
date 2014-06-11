@@ -1,7 +1,9 @@
+<% unless amazon_payments.nil? || amazon_payments.preferred_seller_id.nil? %>
+<div><%= Spree.t(:or) %></div>
 <div id="AmazonPayButton"></div>
 <script type="text/javascript">
   var authRequest;
-  OffAmazonPayments.Button("AmazonPayButton", "<%= Spree::AmazonPayments::Config['seller_id'] %>", {
+  OffAmazonPayments.Button("AmazonPayButton", "<%= amazon_payments.preferred_seller_id %>", {
     type: "LwA",
         authorization: function() {
       loginOptions =
@@ -13,3 +15,4 @@
     }
   });
 </script>
+<% end %>

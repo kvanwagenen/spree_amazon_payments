@@ -9,3 +9,8 @@ en:
     amazon_mws_endpoint: "Amazon MWS Endpoint"
     widgets_js_url: "Widgets.js Url"
     profile_api_endpoint: "Profile API Endpoint"
+    shipping_address_not_set: "Shipping address not set. Please choose a valid shipping address."
+    payment_plan_not_set: "Payment method not chosen. Please choose a payment method."
+    amount_not_set: "An amount was not set on the order. Please try selecting your payment method again."
+    payment_method_not_allowed: "The payment method you chose is not allowed. Please choose another."
+    an_unknown_error_occurred: "An unknown error occurred"

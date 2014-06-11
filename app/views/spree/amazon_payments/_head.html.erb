@@ -1,14 +1,13 @@
 <%
-  amazon_config = Spree::AmazonPayments::Config
-  unless amazon_config['seller_id'].nil? || amazon_config['client_id'].nil? || amazon_config['widgets_js_url'].nil?
+  unless amazon_payments.nil? || amazon_payments.preferred_seller_id.nil? || amazon_payments.preferred_client_id.nil? || amazon_payments.preferred_widgets_js_url.nil?
 %>
 <script type='text/javascript'>
   window.onAmazonLoginReady = function() {
 
-    amazon.Login.setClientId('<%= amazon_config['client_id'] %>');
+    amazon.Login.setClientId('<%= amazon_payments.preferred_client_id %>');
   };
 </script>
 <script type='text/javascript'
-  src='<%= amazon_config['widgets_js_url'] %>?sellerId=<%= amazon_config['seller_id'] %>'>
+  src='<%= amazon_payments.preferred_widgets_js_url %>?sellerId=<%= amazon_payments.preferred_seller_id %>'>
 </script>
 <% end %>
