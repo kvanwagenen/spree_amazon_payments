@@ -8,8 +8,9 @@ module SpreeAmazonPayments
     # Class method that returns a peddler client
     def self.client
       amazon_payments = Spree::PaymentMethod.find_by_type("Spree::Gateway::AmazonPayments")
-      MWS::OffAmazonPayments.instance_eval do 
-        @path = "/OffAmazonPayments_Sandbox/2013-01-01"
+      MWS::OffAmazonPayments.instance_eval do
+        uri = URI(amazon_payments.preferred_amazon_mws_endpoint)
+        @path = uri.path
       end
       client = MWS.off_amazon_payments(
         marketplace_id: amazon_payments.preferred_marketplace_id,
