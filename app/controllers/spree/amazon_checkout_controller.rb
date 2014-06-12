@@ -211,5 +211,18 @@ module Spree
       details = off_amazon_payments_client.get_order_reference_details(session[:amazon_order_reference_id])
       Nokogiri::XML(details.body)
     end
+
+    # Overridden before_filter from skrill CheckoutController decorator
+    # Fixed nil class error
+    def confirm_skrill
+      return unless (params[:state] == "payment") && params[:order] && params[:order][:payments_attributes]
+
+      payment_method = PaymentMethod.find(params[:order][:payments_attributes].first[:payment_method_id])
+      if payment_method.kind_of?(BillingIntegration::Skrill::QuickCheckout)
+        #TODO confirming payment method
+        redirect_to edit_order_checkout_url(@order, :state => 'payment'),
+                    :notice => Spree.t(:complete_skrill_checkout)
+      end
+    end
   end
 end

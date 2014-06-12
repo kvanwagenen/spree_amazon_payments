@@ -1,5 +1,7 @@
 module Spree
   class AmazonIpnController < BaseController
+
+    protect_from_forgery :except => [:ipn]
     
     def ipn
       

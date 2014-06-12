@@ -29,7 +29,6 @@ module SpreeAmazonPayments
       
       # Make request
       response = HTTParty.post("https://fps.amazonaws.com?#{query_params.merge('Signature' => signature).to_query}")
-      Rails.logger.error response
 
       # Check for successful response
       status_el = Nokogiri::XML(response.body).css("VerificationStatus").first
