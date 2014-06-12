@@ -4,10 +4,10 @@ module Spree
     def ipn
       
       # Temporarily log the entire request
-      logger.info("IPN Notification:\n#{params.to_s}")
+      logger.error("IPN Notification:\n#{params.to_s}")
 
       # Verify signature of request
-      if off_amazon_payments_client.valid_signature?(request)
+      if SpreeAmazonPayments::AmazonFps.valid_signature?(request)
 
         # TODO Handle request
 

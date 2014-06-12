@@ -18,6 +18,7 @@ Gem::Specification.new do |s|
 
   s.add_dependency 'spree_core', '~> 2.0.10'
   s.add_dependency 'peddler', '0.7.9'
+  s.add_dependency 'httparty', '0.13.1'
 
   s.add_development_dependency 'capybara', '~> 2.1'
   s.add_development_dependency 'coffee-rails'

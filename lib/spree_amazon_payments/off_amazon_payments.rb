@@ -114,28 +114,7 @@ module SpreeAmazonPayments
 
           run
         end
-
-        def valid_signature?(request)
-
-          # Get endpoint
-          endpoint = request.original_url
-
-          # Get http parameters
-          http_parameters = Rack::Utils.escape(request.env["rack.request.form_vars"])
-
-          # Send request
-          operation('VerifySignature')
-            .add(
-              'UrlEndPoint' => endpoint,
-              'HttpParameters' => http_parameters,
-              'Version' => '2013-01-01'
-            )
-          response = run
-
-          # Check for successful response
-          status_el = Nokogiri::XML(response.body).css("VerificationStatus").first
-          !status_el.nil? && status_el.inner_html == "Success"
-        end
+        
       end
 
       client
