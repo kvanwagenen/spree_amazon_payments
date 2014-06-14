@@ -64,9 +64,20 @@ module Spree
 
       when "payment"
 
-        # Payment selected by user. Set total on order reference
-        @order.update_totals
-        off_amazon_payments_client.set_order_reference_details(session[:amazon_order_reference_id], @order.total.to_f, @order.currency, @order.number)
+        # Ensure order is open
+        xml = order_reference_details_xml
+        if xml.css("State").first.inner_html == "Suspended"
+          flash[:error] = "Your payment method needs to be updated with Amazon before you can continue."
+          redirect_to(amazon_checkout_state_path('payment'))
+          return
+        end
+
+        # Payment selected by user. Set total on order reference if necessary
+        amount_el = xml.css("OrderTotal Amount").first
+        if amount_el.nil? || amount_el.inner_html.to_f != @order.total.to_f
+          @order.update_totals
+          off_amazon_payments_client.set_order_reference_details(session[:amazon_order_reference_id], @order.total.to_f, @order.currency, @order.number)
+        end
 
         # Verify no constraints on order
         xml = order_reference_details_xml
@@ -122,9 +133,10 @@ module Spree
         @order.save(:validate => false)        
 
         # Create payment with an amazon payments checkout as its source
+        auth_number = Spree::AmazonPaymentsCheckout.where("authorization_reference_id LIKE '#{@order.number}%'").count + 1
         amazon_payments_checkout = Spree::AmazonPaymentsCheckout.new({
           :order_reference_id => session[:amazon_order_reference_id],
-          :authorization_reference_id => "#{@order.number}_auth"
+          :authorization_reference_id => "#{@order.number}_auth_#{auth_number}"
         }, :without_protection => true)
         payment = @order.payments.create({
           :source => amazon_payments_checkout,
@@ -135,7 +147,27 @@ module Spree
         amazon_payments_checkout.save!
 
         # Move order to next state (will process payment which will trigger authorization)
-        @order.next
+        begin
+          @order.next
+
+        # Handle any authorization exceptions
+        rescue SpreeAmazonPayments::InvalidPaymentMethodException
+          flash[:error] = "There is a problem with your selected payment method. You need to update your payment method information with Amazon."
+          redirect_to(amazon_checkout_state_path('payment'))
+          return
+        rescue SpreeAmazonPayments::AmazonRejectedAuthorizationException
+          flash[:error] = "Amazon rejected the payment."
+          redirect_to(amazon_checkout_state_path('payment'))
+          return
+        rescue SpreeAmazonPayments::ProcessingFailureException
+          flash[:error] = "Error processing payment authorization."
+          redirect_to(amazon_checkout_state_path('payment'))
+          return
+        rescue SpreeAmazonPayments::TransactionTimedOutException
+          flash[:error] = "Authorization timed out. Select a different payment method or try again later."
+          redirect_to(amazon_checkout_state_path('payment'))
+          return
+        end
 
         # Redirect if complete
         if @order.completed?

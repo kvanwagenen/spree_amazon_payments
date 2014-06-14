@@ -9,3 +9,4 @@ module Spree
 end
 
 require 'spree_amazon_payments/engine'
+require 'spree_amazon_payments/amazon_payments_exceptions'

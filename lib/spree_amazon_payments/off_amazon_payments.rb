@@ -1,6 +1,4 @@
 require 'peddler'
-# require 'httparty'
-# require 'jeff'
 
 module SpreeAmazonPayments
   class OffAmazonPayments
@@ -19,25 +17,6 @@ module SpreeAmazonPayments
         aws_secret_access_key: amazon_payments.preferred_aws_secret_access_key
       )
       client.instance_eval do 
-        # def set_order_reference_details(order_reference_id, order)
-        #   query_params = {
-        #     "AWSAccessKeyId" => aws_access_key_id,
-        #     "Action" => "SetOrderReferenceDetails",
-        #     "AmazonOrderReferenceId" => order_reference_id,
-        #     "OrderReferenceAttributes.OrderTotal.Amount" => order.total.to_s,
-        #     "OrderReferenceAttributes.OrderTotal.CurrencyCode" => "USD",
-        #     "OrderReferenceAttributes.SellerOrderAttributes.SellerOrderId" => order.number,
-        #     "SellerId" => merchant_id,
-        #     "SignatureMethod" => "HmacSHA256",
-        #     "SignatureVersion" => 2,
-        #     "Timestamp" => Time.now.utc.iso8601,
-        #     "Version" => "2013-01-01"
-        #   }
-        #   signature = ::Jeff::Signer.new("post", "mws.amazonservices.com", self.class.path, query_params.to_query).sign_with(aws_secret_access_key)
-        #   response = HTTParty.post("https://mws.amazonservices.com#{self.class.path}?#{query_params.merge('Signature' => signature).to_query}")
-        #   binding.pry
-        #   response
-        # end
 
         def set_order_reference_details(amazon_order_reference_id, order_total, currency_code, order_id, opts = {})
           operation('SetOrderReferenceDetails')
@@ -63,6 +42,7 @@ module SpreeAmazonPayments
               'AuthorizationReferenceId' => authorization_reference_id,
               'AuthorizationAmount.Amount' => authorization_amount,
               'AuthorizationAmount.CurrencyCode' => currency_code,
+              'TransactionTimeout' => 0,
               'Version' => '2013-01-01'
             ))
 

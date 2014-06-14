@@ -9,7 +9,7 @@ module SpreeAmazonPayments
       endpoint = request.original_url
 
       # Get http parameters
-      http_parameters = Rack::Utils.escape(request.env["rack.request.form_vars"])
+      http_parameters = Rack::Utils.escape(request.params.except(*request.path_parameters.keys).to_query)
 
       # Build query
       amazon_payments = Spree::PaymentMethod.find_by_type("Spree::Gateway::AmazonPayments")

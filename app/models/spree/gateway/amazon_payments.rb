@@ -42,7 +42,8 @@ module Spree
     end
 
     def authorize(amount, amazon_payments_checkout, gateway_options)
-
+      payment = amazon_payments_checkout.payment
+      order = payment.order
       # Request authorization
       begin
         response = off_amazon_payments_client.authorize(
@@ -51,20 +52,41 @@ module Spree
           amount, 
           gateway_options[:currency]
         )
-        
+
         # Read and save amazon authorization id
         xml = Nokogiri::XML(response.body)
         auth_id = xml.css("AmazonAuthorizationId").first.inner_html
+        auth_status = xml.css("AuthorizationStatus State").first.inner_html
+        reason_code_el = xml.css("AuthorizationStatus ReasonCode").first
         amazon_payments_checkout.amazon_authorization_id = auth_id
         amazon_payments_checkout.save!
+
+        # Raise exceptions for any authorization errors
+        if auth_status == "Declined"
+          if !reason_code_el.nil?
+            reason_code = reason_code_el.inner_html
+            case reason_code
+            when "InvalidPaymentMethod"
+              raise SpreeAmazonPayments::InvalidPaymentMethodException
+            when "AmazonRejected"
+              raise SpreeAmazonPayments::AmazonRejectedAuthorizationException
+            when "ProcessingFailure"
+              raise SpreeAmazonPayments::ProcessingFailureException
+            when "TransactionTimedOut"
+              raise SpreeAmazonPayments::TransactionTimedOutException
+            end
+          end
+        end
         
         # Create response for processing module
-        OpenStruct.new({
-          :success? => true,
+        response = OpenStruct.new({
+          :success? => (auth_status == "Open"),
           :authorization => auth_id,
           :avs_result => {'code' => nil},
           :cvv_result => false
         })
+        return response
+
       rescue Excon::Errors::BadRequest => e
         logger.error("Attempted to authorize amazon payment more than once. #{self.to_s}:id(#{self.id})")
         return OpenStruct.new({:success? => false})
@@ -75,7 +97,7 @@ module Spree
       
       # Verify authorization status
       if amazon_payments_checkout.can_capture?(payment)
-
+        
         # Capture payment
         begin
           capture_reference_id = "#{payment.order.number}_cap"
@@ -88,12 +110,29 @@ module Spree
 
           # Save capture info
           xml = Nokogiri::XML(response.body)
-          amazon_capture_id = xml.css("AmazonCaptureId").first.inner_html
-          amazon_payments_checkout.capture_reference_id = capture_reference_id
-          amazon_payments_checkout.amazon_capture_id = amazon_capture_id
-          amazon_payments_checkout.save!
+          state = xml.css("CaptureStatus State").first.inner_html      
+          
+          if state == "Open"
+            amazon_capture_id = xml.css("AmazonCaptureId").first.inner_html          
+            amazon_payments_checkout.capture_reference_id = capture_reference_id
+            amazon_payments_checkout.amazon_capture_id = amazon_capture_id
+            amazon_payments_checkout.save!
+          else
 
-        rescue Exception => e
+            # Raise exceptions for any capture errors
+            reason_code_el = xml.css("CaptureStatus ReasonCode").first
+            if !reason_code_el.nil?
+              reason_code = reason_code_el.inner_html
+              case reason_code
+              when "AmazonRejected"
+                raise SpreeAmazonPayments::AmazonRejectedCaptureException
+              when "ProcessingFailure"
+                raise SpreeAmazonPayments::ProcessingFailureException
+              end
+            end
+          end
+
+        rescue Excon::Errors::BadRequest => e
           response = OpenStruct.new({
             :success? => false,
             :to_s => ""
@@ -156,11 +195,28 @@ module Spree
         )
 
         # Save refund id
-        refund_id = Nokogiri::XML(response.body).css("AmazonRefundId").first.inner_html
+        xml = Nokogiri::XML(response.body)
+        refund_id = xml.css("AmazonRefundId").first.inner_html
+        state = xml.css("RefundStatus State").first.inner_html
+        reason_code_el = xml.css("RefundStatus ReasonCode").first
         amazon_payments_checkout.refund_reference_id = refund_reference_id
         amazon_payments_checkout.amazon_refund_id = refund_id
         amazon_payments_checkout.save!
-      rescue Exception => e
+
+        # Raise exceptions for any refund errors
+        if state == "Declined"
+          if !reason_code_el.nil?
+            reason_code = reason_code_el.inner_html
+            case reason_code
+            when "AmazonRejected"
+              raise SpreeAmazonPayments::AmazonRejectedRefundException
+            when "ProcessingFailure"
+              raise SpreeAmazonPayments::ProcessingFailureException
+            end
+          end
+        end
+
+      rescue Excon::Errors::BadRequest => e
         logger.error("#{e.to_s}\n#{e.backtrace.join('\n')}")
         response = OpenStruct.new({
           :success? => false

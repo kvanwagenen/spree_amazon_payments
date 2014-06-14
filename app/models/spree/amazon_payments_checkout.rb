@@ -24,8 +24,8 @@ module Spree
       # Verify authorization status
       response = off_amazon_payments_client.get_authorization_details(amazon_authorization_id)
       xml = Nokogiri::XML(response.body)
-      state = xml.css("State").first.inner_html
-      state == "Open"
+      state_el = xml.css("State").first
+      !state_el.nil? && state_el.inner_html == "Open"
     end
 
     def can_void?(payment)
