@@ -110,14 +110,13 @@ module Spree
 
           # Save capture info
           xml = Nokogiri::XML(response.body)
-          state = xml.css("CaptureStatus State").first.inner_html      
+          state = xml.css("CaptureStatus State").first.inner_html          
+          amazon_capture_id = xml.css("AmazonCaptureId").first.inner_html          
+          amazon_payments_checkout.capture_reference_id = capture_reference_id
+          amazon_payments_checkout.amazon_capture_id = amazon_capture_id
+          amazon_payments_checkout.save!
           
-          if state == "Open"
-            amazon_capture_id = xml.css("AmazonCaptureId").first.inner_html          
-            amazon_payments_checkout.capture_reference_id = capture_reference_id
-            amazon_payments_checkout.amazon_capture_id = amazon_capture_id
-            amazon_payments_checkout.save!
-          else
+          if state == "Declined"
 
             # Raise exceptions for any capture errors
             reason_code_el = xml.css("CaptureStatus ReasonCode").first
