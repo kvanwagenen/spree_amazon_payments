@@ -14,6 +14,6 @@ $(function(){
 
 	// Ensure clicking the logout button also removes amazon token
 	$("#logout-lnk").click(function(e){
-		document.cookie = "amazon_Login_accessToken=; expires=Thu, 01 Jan 1970 00:00:00 GMT";
+		document.cookie = "amazon_Login_state_cache=; expires=Thu, 01 Jan 1970 00:00:00 GMT";
 	});
 })
