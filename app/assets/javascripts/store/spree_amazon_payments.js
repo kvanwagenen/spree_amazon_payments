@@ -10,6 +10,16 @@ $(function(){
 		$("#AmazonPayButton img").click(function(e){
 			$.post('/cart', $("#update-cart").serialize() + "&checkout");			
 		});
+	
+	// Disable order placement button after click to prevent double authorizations
+	}else if(window.location.pathname === "/amazon-payments/checkout/confirm"){
+		$("#save-btn").click(function(e){
+			setTimeout(function(){
+				$('#save-btn').attr('disabled','disabled');
+				$('#save-btn').val('Processing...');
+				$('body').css('cursor', 'wait');
+			}, 50);
+		});
 	}
 
 	// Ensure clicking the logout button also removes amazon token
