@@ -47,8 +47,8 @@ module Spree
 
       # Verify there are no existing authorizations that will conflict
       checkouts = Spree::AmazonPaymentsCheckout.where("authorization_reference_id LIKE '#{order.number}%'").scoped
-      if checkouts.length > 0
-        
+      if checkouts.length > 1
+
         # An existing authorization has already been processed. Prevent second attempt from continuing.
         raise SpreeAmazonPayments::TransactionAmountExceededException
       end
