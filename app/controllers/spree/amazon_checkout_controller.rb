@@ -97,6 +97,11 @@ module Spree
 
       when "confirm"
 
+        if @order.completed?
+          finalize_order_and_redirect
+          return
+        end
+
         # Order confirmed by user. Confirm order reference
         off_amazon_payments_client.confirm_order_reference(session[:amazon_order_reference_id])
 
@@ -189,10 +194,7 @@ module Spree
 
         # Redirect if complete
         if @order.completed?
-          session[:order_id] = nil
-          flash.notice = Spree.t(:order_processed_successfully)
-          flash[:commerce_tracking] = "nothing special"
-          redirect_to completion_route
+          finalize_order_and_redirect
         else
           redirect_to amazon_checkout_state_path(@order.state)
         end
@@ -242,6 +244,13 @@ module Spree
     end
 
     private
+
+    def finalize_order_and_redirect
+      session[:order_id] = nil
+      flash.notice = Spree.t(:order_processed_successfully)
+      flash[:commerce_tracking] = "nothing special"
+      redirect_to completion_route
+    end
 
     def load_order_with_lock
       @order = current_order(lock: true)
