@@ -85,6 +85,11 @@ module Spree
 
         # Raise exceptions for any authorization errors
         if auth_status == "Declined"
+
+          # Destroy checkout instance
+          amazon_payments_checkout.destroy
+          
+          # Handle reason code
           if !reason_code_el.nil?
             reason_code = reason_code_el.inner_html
             case reason_code
