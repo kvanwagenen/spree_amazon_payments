@@ -184,21 +184,6 @@ module Spree
         rescue SpreeAmazonPayments::TransactionAmountExceededException
           logger.error("SpreeAmazonPayments Warning: Attempted to authorize payment(#{payment.id}) twice.")
           flash[:error] = "Your payment has already been successfully authorized. You won't be charged until it ships."
-
-          # Update payment if necessary
-          if payment.state != "completed"
-            payment.state = "completed"
-            payment.save!(:validate => false)
-          end
-
-          # Update order if necessary
-          if @order.state != "complete"
-            @order.state = "complete"
-            @order.completed_at = Time.now
-            @order.payment_state = "balance_due"
-            @order.shipment_state = "pending"
-            @order.save!(:validate => false)
-          end
         end
 
         # Redirect if complete
