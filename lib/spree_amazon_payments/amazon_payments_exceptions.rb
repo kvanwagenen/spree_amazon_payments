@@ -5,4 +5,5 @@ module SpreeAmazonPayments
   class TransactionTimedOutException < RuntimeError; end
   class AmazonRejectedCaptureException < RuntimeError; end
   class AmazonRejectedRefundException < RuntimeError; end
+  class TransactionAmountExceededException < RuntimeError; end
 end

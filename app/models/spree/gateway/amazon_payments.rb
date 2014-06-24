@@ -44,6 +44,28 @@ module Spree
     def authorize(amount, amazon_payments_checkout, gateway_options)
       payment = amazon_payments_checkout.payment
       order = payment.order
+
+      # Verify there are no existing authorizations that will conflict
+      checkouts = Spree::AmazonPaymentsCheckout.where("authorization_reference_id LIKE '#{order.number}%'").scoped
+      if checkouts.length > 0
+        
+        # An existing authorization has already been processed. Prevent second attempt from continuing.
+        raise SpreeAmazonPayments::TransactionAmountExceededException
+      end
+      # checkouts.each do |checkout|
+      #   if !checkout.amazon_authorization_id.nil?
+
+      #     # Ensure the authorization status is open
+      #     xml = Nokogiri::XML(off_amazon_payments_client.get_authorization_details(checkout.amazon_authorization_id).body)
+      #     state_el = xml.css("State").first
+      #     if !state_el.nil? && (state_el.inner_html == "Open" || state_el.inner_html == "Pending")
+
+      #       # An existing authorization has already been processed. Prevent second attempt from continuing.
+      #       raise SpreeAmazonPayments::TransactionAmountExceededException
+      #     end
+      #   end
+      # end
+
       # Request authorization
       begin
         response = off_amazon_payments_client.authorize(
