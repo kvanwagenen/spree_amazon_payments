@@ -68,12 +68,16 @@ module Spree
 
       # Request authorization
       begin
+        logger.error("Making MWS Authorize request: \n\tOrder reference id: #{amazon_payments_checkout.order_reference_id}\n\tAuth ref id: #{amazon_payments_checkout.authorization_reference_id}\n\tAmount: #{amount}")
+
         response = off_amazon_payments_client.authorize(
           amazon_payments_checkout.order_reference_id, 
           amazon_payments_checkout.authorization_reference_id, 
           amount, 
           gateway_options[:currency]
         )
+
+        logger.error("MWS Authorize response: #{response.body}")
 
         # Read and save amazon authorization id
         xml = Nokogiri::XML(response.body)

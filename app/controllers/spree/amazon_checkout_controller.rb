@@ -14,6 +14,13 @@ module Spree
     # Filters
     before_filter :prevent_browser_caching
 
+    # Debugging
+    after_filter :log_response_body, :only => [:update]
+
+    def log_response_body
+      puts response.body
+    end
+
     layout 'spree/layouts/checkout'
 
     def prevent_browser_caching
@@ -96,6 +103,8 @@ module Spree
         end
 
       when "confirm"
+
+        logger.error("Confirming amazon payment order. Order: #{@order.id}:#{@order.to_s} state:#{@order.state}")
 
         if @order.completed?
           finalize_order_and_redirect
