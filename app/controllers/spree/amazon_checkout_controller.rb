@@ -18,7 +18,7 @@ module Spree
     after_filter :log_response_body, :only => [:update]
 
     def log_response_body
-      puts response.body
+      $stderr.puts response.body
     end
 
     layout 'spree/layouts/checkout'
