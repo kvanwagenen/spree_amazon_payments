@@ -105,6 +105,11 @@ module Spree
       when "confirm"
 
         logger.error("Confirming amazon payment order. Order: #{@order.id}:#{@order.to_s} state:#{@order.state}")
+        logger.error("Order shipments: #{@order.shipments}")
+        logger.error("Order payments: #{@order.payments}")
+        sources = @order.payments.map{|o|o.source}
+        logger.error("Order sources: #{sources}")
+        logger.error("Order adjustments: #{@order.adjustments}")
 
         # Prevent unwanted reauthorizations
         if !@order.nil?
@@ -189,6 +194,11 @@ module Spree
           @order.next
 
           logger.error "Order state after authorize: #{@order.state}"
+          logger.error("Order shipments: #{@order.shipments}")
+          logger.error("Order payments: #{@order.payments}")
+          sources = @order.payments.map{|o|o.source}
+          logger.error("Order sources: #{sources}")
+          logger.error("Order adjustments: #{@order.adjustments}")
 
         # Handle any authorization exceptions
         rescue SpreeAmazonPayments::InvalidPaymentMethodException
