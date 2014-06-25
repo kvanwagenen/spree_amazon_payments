@@ -10,7 +10,8 @@ module Spree
       :refund_reference_id, 
       :amazon_authorization_id,
       :amazon_capture_id,
-      :amazon_refund_id
+      :amazon_refund_id,
+      :decline_reason_code
     )
 
     def actions

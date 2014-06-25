@@ -106,9 +106,33 @@ module Spree
 
         logger.error("Confirming amazon payment order. Order: #{@order.id}:#{@order.to_s} state:#{@order.state}")
 
-        if @order.completed?
-          finalize_order_and_redirect
-          return
+        # Prevent unwanted reauthorizations
+        if !@order.nil?
+          if @order.completed?
+            finalize_order_and_redirect
+            return
+          elsif @order.payments.any?
+            @order.payments.each do |p|
+              if p.source.instance_of?(Spree::AmazonPaymentsCheckout) && p.source.can_capture?(p)
+                logger.error("SpreeAmazonPayments Warning: Attempted to authorize payment(#{payment.id}) twice.")
+                flash[:error] = "Your payment has already been successfully authorized. You won't be charged until it ships."
+
+                # Update the payment
+                p.state = "pending"
+                p.save!
+
+                # Update the order
+                @order.state = "complete"
+                @order.payment_total = p.amount
+                @order.shipment_state = "pending"
+                @order.payment_state = "balance_due"
+                @order.save!
+
+                finalize_order_and_redirect
+                return
+              end
+            end  
+          end
         end
 
         # Order confirmed by user. Confirm order reference
@@ -144,7 +168,7 @@ module Spree
         @order.ship_address.phone = phone
         @order.ship_address.save!(:validate => false)
         @order.bill_address = @order.ship_address
-        @order.save(:validate => false)        
+        @order.save(:validate => false)
 
         # Create payment with an amazon payments checkout as its source
         auth_number = Spree::AmazonPaymentsCheckout.where("authorization_reference_id LIKE '#{@order.number}%'").count + 1
@@ -163,6 +187,8 @@ module Spree
         # Move order to next state (will process payment which will trigger authorization)
         begin
           @order.next
+
+          logger.error "Order state after authorize: #{@order.state}"
 
         # Handle any authorization exceptions
         rescue SpreeAmazonPayments::InvalidPaymentMethodException
@@ -184,6 +210,8 @@ module Spree
         rescue SpreeAmazonPayments::TransactionAmountExceededException
           logger.error("SpreeAmazonPayments Warning: Attempted to authorize payment(#{payment.id}) twice.")
           flash[:error] = "Your payment has already been successfully authorized. You won't be charged until it ships."
+        rescue Exception => e
+          logger.error e.message + "\n  " + e.backtrace.join("\n  ")
         end
 
         # Redirect if complete

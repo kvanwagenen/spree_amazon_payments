@@ -45,12 +45,17 @@ module Spree
       payment = amazon_payments_checkout.payment
       order = payment.order
 
-      # Verify there are no existing authorizations that will conflict
-      checkouts = Spree::AmazonPaymentsCheckout.where("authorization_reference_id LIKE '#{order.number}%'").scoped
-      if checkouts.length > 1
+      # Verify the authorization amount won't put us over the order total
+      successful_checkouts = Spree::AmazonPaymentsCheckout.where("authorization_reference_id LIKE '#{order.number}%' and amazon_authorization_id is not null and decline_reason_code is null").scoped
+      if successful_checkouts.length > 0
+
+        # Get the total amount successfully authorized
+        total_authorized = successful_checkouts.sum{|checkout|checkout.payment.amount.to_f}
 
         # An existing authorization has already been processed. Prevent second attempt from continuing.
-        raise SpreeAmazonPayments::TransactionAmountExceededException
+        if total_authorized + amount > order.total
+          raise SpreeAmazonPayments::TransactionAmountExceededException
+        end
       end
       # checkouts.each do |checkout|
       #   if !checkout.amazon_authorization_id.nil?
@@ -84,14 +89,14 @@ module Spree
         auth_id = xml.css("AmazonAuthorizationId").first.inner_html
         auth_status = xml.css("AuthorizationStatus State").first.inner_html
         reason_code_el = xml.css("AuthorizationStatus ReasonCode").first
+        unless reason_code_el.nil?
+          amazon_payments_checkout.decline_reason_code = reason_code_el.inner_html
+        end
         amazon_payments_checkout.amazon_authorization_id = auth_id
         amazon_payments_checkout.save!
 
         # Raise exceptions for any authorization errors
         if auth_status == "Declined"
-
-          # Destroy checkout instance
-          amazon_payments_checkout.destroy
           
           # Handle reason code
           if !reason_code_el.nil?
@@ -116,10 +121,11 @@ module Spree
           :avs_result => {'code' => nil},
           :cvv_result => false
         })
+        logger.error("Authorize response: #{response.to_s}")
         return response
 
       rescue Excon::Errors::BadRequest => e
-        logger.error("Attempted to authorize amazon payment more than once. #{self.to_s}:id(#{self.id})")
+        logger.error("Authorize request error. Probably attempted to authorize order reference more than once. #{self.to_s}:id(#{self.id})")
         return OpenStruct.new({:success? => false})
       end
     end
