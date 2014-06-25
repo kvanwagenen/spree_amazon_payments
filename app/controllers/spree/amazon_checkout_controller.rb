@@ -105,6 +105,7 @@ module Spree
       when "confirm"
 
         logger.error("Confirming amazon payment order. Order: #{@order.id}:#{@order.to_s} state:#{@order.state}")
+        logger.error("Order: #{@order}")
         logger.error("Order shipments: #{@order.shipments}")
         logger.error("Order payments: #{@order.payments}")
         sources = @order.payments.map{|o|o.source}
@@ -194,6 +195,7 @@ module Spree
           @order.next
 
           logger.error "Order state after authorize: #{@order.state}"
+          logger.error("Order: #{@order}")
           logger.error("Order shipments: #{@order.shipments}")
           logger.error("Order payments: #{@order.payments}")
           sources = @order.payments.map{|o|o.source}
