@@ -190,9 +190,13 @@ module Spree
         amazon_payments_checkout.payment = payment
         amazon_payments_checkout.save!
 
-        # Move order to next state (will process payment which will trigger authorization)
         begin
-          @order.next
+
+          # Move order to next state by hand
+          @order.process_payments! if @order.payment_required?
+          @order.state = "complete"
+          @order.finalize!
+          @order.save!
 
           logger.error "Order state after authorize: #{@order.state}"
           logger.error("Order: #{@order.attributes}")
@@ -201,15 +205,6 @@ module Spree
           sources = @order.payments.map{|o|o.source}
           logger.error("Order sources: #{sources}")
           logger.error("Order adjustments: #{@order.adjustments}")
-
-          # HACK: Still haven't figured out why order doesn't move to complete sometimes. Until identified, set state by hand.
-          if @order.state != 'complete'
-            @order.finalize!
-            @order.state = 'complete'
-            @order.shipment_state = 'pending'
-            @order.payment_state = 'balance_due'
-            @order.save!
-          end
 
         # Handle any authorization exceptions
         rescue SpreeAmazonPayments::InvalidPaymentMethodException
