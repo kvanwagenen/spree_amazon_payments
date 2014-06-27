@@ -105,7 +105,7 @@ module Spree
       when "confirm"
 
         logger.error("Confirming amazon payment order. Order: #{@order.id}:#{@order.to_s} state:#{@order.state}")
-        logger.error("Order: #{@order}")
+        logger.error("Order: #{@order.attributes}")
         logger.error("Order shipments: #{@order.shipments}")
         logger.error("Order payments: #{@order.payments}")
         sources = @order.payments.map{|o|o.source}
@@ -195,12 +195,21 @@ module Spree
           @order.next
 
           logger.error "Order state after authorize: #{@order.state}"
-          logger.error("Order: #{@order}")
+          logger.error("Order: #{@order.attributes}")
           logger.error("Order shipments: #{@order.shipments}")
           logger.error("Order payments: #{@order.payments}")
           sources = @order.payments.map{|o|o.source}
           logger.error("Order sources: #{sources}")
           logger.error("Order adjustments: #{@order.adjustments}")
+
+          # HACK: Still haven't figured out why order doesn't move to complete sometimes. Until identified, set state by hand.
+          if @order.state != 'complete'
+            @order.finalize!
+            @order.state = 'complete'
+            @order.shipment_state = 'pending'
+            @order.payment_state = 'balance_due'
+            @order.save!
+          end
 
         # Handle any authorization exceptions
         rescue SpreeAmazonPayments::InvalidPaymentMethodException
