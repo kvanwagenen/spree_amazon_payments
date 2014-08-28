@@ -35,6 +35,7 @@ module Spree
         # Update the user's amazon user id
         spree_current_user.amazon_user_id = profile["user_id"]
         spree_current_user.save!
+        user = spree_current_user
 
       end
 
