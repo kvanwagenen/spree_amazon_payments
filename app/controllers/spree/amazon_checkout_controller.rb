@@ -274,7 +274,11 @@ module Spree
         state = @order.state
       end
 
-      if checkout_states.include?(:"#{state}") && checkout_states.index(:"#{state}") < checkout_states.index(:"#{@order.state}")
+      if !checkout_states.include?(:"#{@order.state}")
+        Rails.logger.error("CheckoutStateError: Params: #{params}\nOrder state: #{@order.state}\nOrder Attributes: #{@order.attributes}")
+      end
+
+      if checkout_states.include?(:"#{state}") && checkout_states.include?(:"#{@order.state}") && checkout_states.index(:"#{state}") < checkout_states.index(:"#{@order.state}")
         @order.state = state
         @order.save!
       end
