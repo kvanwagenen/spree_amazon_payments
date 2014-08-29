@@ -3,7 +3,7 @@ Spree::User.class_eval do
 
   def purge_incomplete_addresses
     if respond_to?(:addresses)
-      addresses.destroy(addresses.where("spree_addresses.firstname IS NULL || spree_addresses.lastname IS NULL").scoped) #.each{|a| a.destroy!}
+      addresses.delete(addresses.where("spree_addresses.lastname IS NULL").scoped)
     end
   end
 end
