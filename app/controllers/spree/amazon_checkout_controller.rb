@@ -81,8 +81,8 @@ module Spree
 
         # Payment selected by user. Set total on order reference if necessary
         amount_el = xml.css("OrderTotal Amount").first
-        if amount_el.nil? || amount_el.inner_html.to_f != @order.total.to_f
-          @order.update_totals
+        @order.update_totals
+        if amount_el.nil? || amount_el.inner_html.to_f != @order.total.to_f          
           off_amazon_payments_client.set_order_reference_details(session[:amazon_order_reference_id], @order.total.to_f, @order.currency, @order.number)
         end
 
