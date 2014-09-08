@@ -1,3 +1,4 @@
+<% unless amazon_payments.nil? || amazon_payments.preferred_seller_id.nil? || !amazon_payments.show_on_frontend?%>
 <div id="addressBookWidgetDiv">
 </div> 
 
@@ -31,3 +32,4 @@ new OffAmazonPayments.Widgets.AddressBook({
   }
 }).bind("addressBookWidgetDiv");
 </script>
+<% end %>

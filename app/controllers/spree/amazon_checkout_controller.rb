@@ -12,6 +12,7 @@ module Spree
     }
 
     # Filters
+    before_filter :ensure_payments_enabled
     before_filter :prevent_browser_caching
 
     # Debugging

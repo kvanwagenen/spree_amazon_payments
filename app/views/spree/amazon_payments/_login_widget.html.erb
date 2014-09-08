@@ -1,4 +1,4 @@
-<% unless amazon_payments.nil? || amazon_payments.preferred_seller_id.nil? %>
+<% unless amazon_payments.nil? || amazon_payments.preferred_seller_id.nil? || !amazon_payments.show_on_frontend? %>
 <div><%= Spree.t(:or) %></div>
 <div id="AmazonPayButton"></div>
 <script type="text/javascript">

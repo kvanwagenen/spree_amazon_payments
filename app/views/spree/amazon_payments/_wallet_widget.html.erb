@@ -1,3 +1,4 @@
+<% unless amazon_payments.nil? || amazon_payments.preferred_seller_id.nil? || !amazon_payments.show_on_frontend? %>
 <div id="walletWidgetDiv">
 </div>
 <script>
@@ -20,3 +21,4 @@ new OffAmazonPayments.Widgets.Wallet({
   }
 }).bind("walletWidgetDiv");
 </script>
+<% end %>

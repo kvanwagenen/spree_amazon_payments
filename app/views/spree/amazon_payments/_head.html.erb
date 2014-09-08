@@ -1,5 +1,5 @@
 <%
-  unless amazon_payments.nil? || amazon_payments.preferred_seller_id.nil? || amazon_payments.preferred_client_id.nil? || amazon_payments.preferred_widgets_js_url.nil?
+  unless amazon_payments.nil? || amazon_payments.preferred_seller_id.nil? || amazon_payments.preferred_client_id.nil? || amazon_payments.preferred_widgets_js_url.nil? || !amazon_payments.show_on_frontend?
 %>
 <script type='text/javascript'>
   window.onAmazonLoginReady = function() {

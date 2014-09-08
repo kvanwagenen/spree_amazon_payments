@@ -21,6 +21,10 @@ module Spree
       true
     end
 
+    def show_on_frontend?
+      self.active && (self.display_on == "front_end" || self.display_on.blank?)
+    end
+
     def provider_class
       ::SpreeAmazonPayments::OffAmazonPayments
     end

@@ -1,3 +1,4 @@
+<% unless amazon_payments.nil? || amazon_payments.preferred_seller_id.nil? || !amazon_payments.show_on_frontend? %>
 <div id="AmazonPayButton"></div>
 <script type="text/javascript">
   var authRequest;
@@ -13,3 +14,4 @@
     }
   });
 </script>
+<% end %>

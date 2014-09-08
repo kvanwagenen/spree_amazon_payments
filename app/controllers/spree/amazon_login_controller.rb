@@ -9,6 +9,9 @@ module Spree
   class AmazonLoginController < Devise::SessionsController
     include AmazonPaymentsConcerns
 
+    # Filters
+    before_filter :ensure_payments_enabled
+
     def login      
 
       # Validate access token
